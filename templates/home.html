@@ -11,23 +11,77 @@
         <p class="text-sm mt-1">Acompanhe o movimento de capital no mercado brasileiro em tempo real</p>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 py-10">
-        <form method="POST" class="flex justify-center mb-8">
+    <main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
+        <form method="POST" class="flex justify-center mb-6">
             <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-3 px-6 rounded">
                 🔄 Atualizar Gráfico
             </button>
         </form>
 
         {% if imagem %}
-        <div class="bg-white p-6 rounded-xl shadow-xl">
+        <div class="bg-white p-6 rounded-xl shadow">
             <img src="data:image/png;base64,{{ imagem }}" alt="Gráfico de Fluxo de Investidores" class="w-full rounded">
         </div>
         {% endif %}
 
-        <section class="mt-10 text-sm text-center text-gray-500">
-            <p><strong>Fonte:</strong> B3 e Dados de Mercado</p>
-            <p>@alan_richard — Dashboard Fluxo de Investidores</p>
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-blue-800">
+                <h3 class="text-blue-800 font-bold">Estrangeiro</h3>
+                <p class="text-xl font-semibold">R$ 1,7Bi</p>
+                <p class="text-sm text-red-600">Saída líquida</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-orange-500">
+                <h3 class="text-orange-600 font-bold">Institucional</h3>
+                <p class="text-xl font-semibold">R$ 0,3Bi</p>
+                <p class="text-sm text-red-600">Saída líquida</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-green-600">
+                <h3 class="text-green-600 font-bold">Pessoa Física</h3>
+                <p class="text-xl font-semibold">R$ 2,8Bi</p>
+                <p class="text-sm text-green-600">Entrada líquida</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-teal-500">
+                <h3 class="text-teal-600 font-bold">Inst. Financeira</h3>
+                <p class="text-xl font-semibold">R$ 0,5Bi</p>
+                <p class="text-sm text-red-600">Saída líquida</p>
+            </div>
+            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-purple-500">
+                <h3 class="text-purple-600 font-bold">Outros</h3>
+                <p class="text-xl font-semibold">R$ 0,1Bi</p>
+                <p class="text-sm text-green-600">Entrada líquida</p>
+            </div>
         </section>
+
+        <section class="grid md:grid-cols-2 gap-6 mt-12">
+            <div class="bg-white rounded-xl p-6 shadow space-y-3">
+                <h2 class="font-bold text-lg mb-2">📘 Definições dos Investidores</h2>
+                <p><strong class="text-blue-800">Estrangeiro:</strong> Fundos e investidores internacionais.</p>
+                <p><strong class="text-orange-600">Institucional:</strong> Fundos de pensão, seguradoras, etc.</p>
+                <p><strong class="text-green-600">Pessoa Física:</strong> Investidores individuais na Bolsa.</p>
+                <p><strong class="text-teal-600">Inst. Financeira:</strong> Bancos e corretoras.</p>
+                <p><strong class="text-purple-600">Outros:</strong> Empresas, governo e não categorizados.</p>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow space-y-4">
+                <h2 class="font-bold text-lg mb-2">📊 Análise Atual</h2>
+                <div class="bg-red-100 border-l-4 border-red-500 p-3">
+                    <p class="font-semibold text-red-700">Fluxo Estrangeiro: Saída</p>
+                    <p class="text-sm">Investidores estrangeiros reduziram posições.</p>
+                </div>
+                <div class="bg-red-100 border-l-4 border-red-500 p-3">
+                    <p class="font-semibold text-red-700">Institucional: Saída</p>
+                    <p class="text-sm">Institucionais reduziram exposição.</p>
+                </div>
+                <div class="bg-green-100 border-l-4 border-green-600 p-3">
+                    <p class="font-semibold text-green-700">Pessoa Física: Entrada</p>
+                    <p class="text-sm">Aproveitando oportunidades de compra.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center text-sm text-gray-500 mt-10">
+            <p><strong>Fonte:</strong> B3 – Dados atualizados diariamente</p>
+            <p>@alan_richard – Dashboard Fluxo de Investidores • Valores em bilhões de reais</p>
+        </footer>
     </main>
 </body>
 </html>
