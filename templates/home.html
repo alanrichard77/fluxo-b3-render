@@ -8,7 +8,7 @@
 <body class="bg-gray-50 text-gray-800">
     <header class="bg-gradient-to-r from-blue-900 to-blue-700 p-6 text-white text-center shadow">
         <h1 class="text-3xl font-bold">📊 Fluxo de Investidores B3</h1>
-        <p class="text-sm mt-1">Acompanhe o movimento de capital no mercado brasileiro em tempo real</p>
+        <p class="text-sm mt-1">Acompanhe o movimento de capital no mercado brasileiro dados mais recentes</p>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
@@ -24,7 +24,26 @@
         </div>
         {% endif %}
 
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    {% for key, label, cor in [
+        ('estrangeiro_acum', 'Estrangeiro', 'blue-800'),
+        ('institucional_acum', 'Institucional', 'orange-600'),
+        ('pessoafisica_acum', 'Pessoa Física', 'green-600'),
+        ('instfinanceira_acum', 'Inst. Financeira', 'teal-500'),
+        ('outros_acum', 'Outros', 'purple-600')
+    ] %}
+    {% set valor = resumo[key] if resumo and key in resumo else 0 %}
+    <div class="bg-white p-4 rounded shadow text-center border-l-4 border-{{ cor }}">
+        <h3 class="text-{{ cor }} font-bold">{{ label }}</h3>
+        <p class="text-xl font-semibold">R$ {{ "%.1f"|format(valor|float)|replace('.', ',') }}Bi</p>
+        <p class="text-sm {{ 'text-green-600' if valor > 0 else 'text-red-600' }}">
+            {{ 'Entrada líquida' if valor > 0 else 'Saída líquida' }}
+        </p>
+    </div>
+    {% endfor %}
+</section>
+
             <div class="bg-white p-4 rounded shadow text-center border-l-4 border-blue-800">
                 <h3 class="text-blue-800 font-bold">Estrangeiro</h3>
                 <p class="text-xl font-semibold">R$ 1,7Bi</p>

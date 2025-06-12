@@ -34,8 +34,8 @@ def login():
 @app.route('/home', methods=['GET', 'POST'])
 def home():
     if request.method == 'POST':
-        grafico = gerar_grafico()
-        return render_template('home.html', imagem=grafico)
+        grafico, resumo = gerar_grafico()
+        return render_template('home.html', imagem=grafico, resumo=resumo)
     return render_template('home.html', imagem=None)
 
 def gerar_grafico():
@@ -89,27 +89,34 @@ def gerar_grafico():
     tick_spacing = len(datas) // 10
     ax1.set_xticks([datas[i] for i in range(0, len(datas), tick_spacing)])
     ax1.set_xticklabels([datas[i].strftime('%Y-%m') for i in range(0, len(datas), tick_spacing)], rotation=0)
-    plt.title('📊 Fluxo de Investidores na B3', fontsize=22, weight='bold')
+    
 
     linhas = [ax1.plot([],[], color=cores[i], linewidth=2.5)[0] for i in range(len(ordem_legenda))]
     linhas += [ax2.plot([],[], color='#1c1c1c', linestyle='--', linewidth=2)[0]]
     legendas = list(labels_dict.values()) + ['Ibovespa']
+    
     ax1.legend(linhas, legendas, loc='upper left', fontsize=12, frameon=True)
+
+    # Marca d'água central no gráfico
+    plt.text(0.5, 0.5, '@alan_richard', fontsize=60, color='gray', alpha=0.07,
+             ha='center', va='center', transform=plt.gcf().transFigure)
+
+    plt.tight_layout()
+
 
     linha_base = 0.110
     espaco = 0.012
-    plt.figtext(0.01, linha_base, "Categorias de Investidores:", ha="left", fontsize=9, weight='bold')
-    plt.figtext(0.01, linha_base - espaco * 1, "• Estrangeiro: fundos e investidores de fora do Brasil", ha="left", fontsize=9)
-    plt.figtext(0.01, linha_base - espaco * 2, "• Institucional: fundos de pensão, seguradoras, etc.", ha="left", fontsize=9)
-    plt.figtext(0.01, linha_base - espaco * 3, "• Pessoa Física: investidores individuais", ha="left", fontsize=9)
-    plt.figtext(0.01, linha_base - espaco * 4, "• Instituição Financeira: bancos e corretoras", ha="left", fontsize=9)
-    plt.figtext(0.01, linha_base - espaco * 5, "• Outros: empresas, governo e não categorizados", ha="left", fontsize=9)
-    plt.figtext(0.01, linha_base - espaco * 6.4, "Fonte: B3 e Dados de Mercado", fontsize=10, ha='left')
-    plt.figtext(0.99, linha_base - espaco * 6.4, "@alan_richard", fontsize=12, color='gray', ha='right', alpha=0.6)
-
-    plt.tight_layout(rect=(0, 0.18, 1, 1))
+                                
+    plt.tight_layout()
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
+    # Obter valores acumulados mais recentes por categoria
+    resumo = {}
+    for col in ordem_legenda:
+        resumo[col] = df_final[col].dropna().iloc[-1] if col in df_final.columns else 0
+
+    return encoded, resumo
+
     buf.seek(0)
     return base64.b64encode(buf.read()).decode('utf-8')
 
