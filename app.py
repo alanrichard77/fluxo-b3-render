@@ -34,10 +34,18 @@ def gerar_grafico():
     start_date = '2025-01-01'
     end_date = datetime.today().strftime('%Y-%m-%d')
     ibov = yf.download('^BVSP', start=start_date, end=end_date)
-    ibov = ibov.reset_index()
-    ibov = ibov.rename(columns={'Date': 'data', 'Close': 'ibovespa'})
-    ibov['data'] = pd.to_datetime(ibov['data'])
-    ibov = ibov[['data', 'ibovespa']]
+
+# Verifica e trata MultiIndex
+if isinstance(ibov.columns, pd.MultiIndex):
+    ibov.columns = [col[0] for col in ibov.columns]
+
+# Reinicia o índice antes de renomear as colunas
+ibov = ibov.reset_index()
+
+# Renomeia as colunas para padrão usado no merge
+ibov = ibov.rename(columns={'Date': 'data', 'Close': 'ibovespa'})
+
+
 
     url = 'https://www.dadosdemercado.com.br/fluxo'
     tables = pd.read_html(url, decimal=',', thousands='.')
