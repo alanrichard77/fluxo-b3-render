@@ -1,11 +1,5 @@
 <!DOCTYPE html>
-<html>
-<head><title>Login</title></head>
-<body>
-    <h2>Digite a senha para ver o gráfico</h2>
-    <form method="POST">
-        <input type="password" name="senha" placeholder="Senha" required>
-        <input type="submit" value="Entrar">
-    </form>
-</body>
-</html>
+<html lang="pt-br">
+<head><meta charset="UTF-8"><title>Login</title><link rel="stylesheet" href="/static/css/style.css"></head>
+<body><div class="container"><h2>🔐 Acesso Restrito</h2>{% if erro %}<p class="erro">Senha incorreta.</p>{% endif %}
+<form method="POST"><input type="password" name="senha" placeholder="Digite a senha" required><button type="submit">Entrar</button></form></div></body></html>

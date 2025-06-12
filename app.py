@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 import pandas as pd
 import matplotlib.pyplot as plt
 import yfinance as yf
@@ -7,6 +7,8 @@ import io, base64, unicodedata
 import matplotlib.ticker as mticker
 
 app = Flask(__name__)
+
+senha_sistema = "123456"
 
 def normalize_colname(col):
     col = str(col)
@@ -24,28 +26,27 @@ def parse_valor(valor):
 def login():
     if request.method == 'POST':
         senha = request.form['senha']
-        if senha == '123456':
-            return gerar_grafico()
+        if senha == senha_sistema:
+            return redirect(url_for('home'))
         else:
-            return 'Senha incorreta. Volte e tente novamente.'
+            return render_template('login.html', erro=True)
     return render_template('login.html')
+
+@app.route('/home', methods=['GET', 'POST'])
+def home():
+    if request.method == 'POST':
+        grafico = gerar_grafico()
+        return render_template('home.html', imagem=grafico)
+    return render_template('home.html', imagem=None)
 
 def gerar_grafico():
     start_date = '2025-01-01'
     end_date = datetime.today().strftime('%Y-%m-%d')
     ibov = yf.download('^BVSP', start=start_date, end=end_date)
-
-# Verifica e trata MultiIndex
-if isinstance(ibov.columns, pd.MultiIndex):
-    ibov.columns = [col[0] for col in ibov.columns]
-
-# Reinicia o índice antes de renomear as colunas
-ibov = ibov.reset_index()
-
-# Renomeia as colunas para padrão usado no merge
-ibov = ibov.rename(columns={'Date': 'data', 'Close': 'ibovespa'})
-
-
+    if isinstance(ibov.columns, pd.MultiIndex):
+        ibov.columns = [col[0] for col in ibov.columns]
+    ibov = ibov.reset_index()
+    ibov = ibov.rename(columns={'Date': 'data', 'Close': 'ibovespa'})
 
     url = 'https://www.dadosdemercado.com.br/fluxo'
     tables = pd.read_html(url, decimal=',', thousands='.')
@@ -76,7 +77,6 @@ ibov = ibov.rename(columns={'Date': 'data', 'Close': 'ibovespa'})
         if col in df_final.columns:
             ax1.plot(df_final['data'], df_final[col], linewidth=2.5, label=labels_dict[col], color=cores[i])
     ax1.set_ylabel('Acumulado (R$ bilhões)', fontsize=13)
-    ax1.yaxis.set_major_locator(mticker.MultipleLocator(5))
     ax2 = ax1.twinx()
     ax2.plot(df_final['data'], df_final['ibovespa'], color='#1c1c1c', linestyle='--', linewidth=2, label='Ibovespa')
     ax2.set_ylabel('Ibovespa (pts)', fontsize=13)
@@ -85,7 +85,7 @@ ibov = ibov.rename(columns={'Date': 'data', 'Close': 'ibovespa'})
     plt.savefig(buf, format="png")
     buf.seek(0)
     encoded = base64.b64encode(buf.read()).decode('utf-8')
-    return f'<h1>Gráfico de Fluxo</h1><img src="data:image/png;base64,{encoded}"/>'
+    return encoded
 
 if __name__ == '__main__':
     app.run()
