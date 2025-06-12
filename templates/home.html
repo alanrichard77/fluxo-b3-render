@@ -1,6 +1,33 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head><meta charset="UTF-8"><title>Fluxo B3</title><link rel="stylesheet" href="/static/css/style.css"></head>
-<body><div class="container"><h1>📊 Fluxo de Investidores na B3</h1>
-<form method="POST"><button type="submit">🔄 Atualizar Gráfico</button></form>
-{% if imagem %}<div class="grafico"><img src="data:image/png;base64,{{ imagem }}" alt="Gráfico de Fluxo"></div>{% endif %}</div></body></html>
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Fluxo B3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+    <header class="bg-gradient-to-r from-blue-900 to-blue-700 p-6 text-white text-center shadow">
+        <h1 class="text-3xl font-bold">📊 Fluxo de Investidores B3</h1>
+        <p class="text-sm mt-1">Acompanhe o movimento de capital no mercado brasileiro em tempo real</p>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-10">
+        <form method="POST" class="flex justify-center mb-8">
+            <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-3 px-6 rounded">
+                🔄 Atualizar Gráfico
+            </button>
+        </form>
+
+        {% if imagem %}
+        <div class="bg-white p-6 rounded-xl shadow-xl">
+            <img src="data:image/png;base64,{{ imagem }}" alt="Gráfico de Fluxo de Investidores" class="w-full rounded">
+        </div>
+        {% endif %}
+
+        <section class="mt-10 text-sm text-center text-gray-500">
+            <p><strong>Fonte:</strong> B3 e Dados de Mercado</p>
+            <p>@alan_richard — Dashboard Fluxo de Investidores</p>
+        </section>
+    </main>
+</body>
+</html>
