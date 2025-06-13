@@ -6,101 +6,47 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
-    <header class="bg-gradient-to-r from-blue-900 to-blue-700 p-6 text-white text-center shadow">
-        <h1 class="text-3xl font-bold">📊 Fluxo de Investidores B3</h1>
-        <p class="text-sm mt-1">Acompanhe o movimento de capital no mercado brasileiro dados mais recentes</p>
-    </header>
+<header class="bg-gradient-to-r from-blue-900 to-blue-700 p-6 text-white text-center shadow">
+    <h1 class="text-3xl font-bold">📊 Fluxo de Investidores B3</h1>
+    <p class="text-sm mt-1">Acompanhe o movimento de capital no mercado brasileiro dados mais recentes</p>
+</header>
 
-    <main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
-        <form method="POST" class="flex justify-center mb-6">
-            <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-3 px-6 rounded">
-                🔄 Atualizar Gráfico
-            </button>
-        </form>
+<main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
+    <form method="POST" class="flex justify-center mb-6">
+        <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-3 px-6 rounded">
+            🔄 Atualizar Gráfico
+        </button>
+    </form>
 
-        {% if imagem %}
-        <div class="bg-white p-6 rounded-xl shadow">
-            <img src="data:image/png;base64,{{ imagem }}" alt="Gráfico de Fluxo de Investidores" class="w-full rounded">
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {% for key, label, cor in [
+            ('estrangeiro_acum', 'Estrangeiro', 'blue-800'),
+            ('institucional_acum', 'Institucional', 'orange-600'),
+            ('pessoafisica_acum', 'Pessoa Física', 'green-600'),
+            ('instfinanceira_acum', 'Inst. Financeira', 'teal-500'),
+            ('outros_acum', 'Outros', 'purple-600')
+        ] %}
+        {% set valor = resumo[key] if resumo and key in resumo else 0 %}
+        <div class="bg-white p-4 rounded shadow text-center border-l-4 border-{{ cor }}">
+            <h3 class="text-{{ cor }} font-bold">{{ label }}</h3>
+            <p class="text-xl font-semibold">R$ {{ "%.1f"|format(valor|float)|replace('.', ',') }}Bi</p>
+            <p class="text-sm {{ 'text-green-600' if valor > 0 else 'text-red-600' }}">
+                {{ 'Entrada líquida' if valor > 0 else 'Saída líquida' }}
+            </p>
         </div>
-        {% endif %}
+        {% endfor %}
+    </section>
 
-        
-<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-    {% for key, label, cor in [
-        ('estrangeiro_acum', 'Estrangeiro', 'blue-800'),
-        ('institucional_acum', 'Institucional', 'orange-600'),
-        ('pessoafisica_acum', 'Pessoa Física', 'green-600'),
-        ('instfinanceira_acum', 'Inst. Financeira', 'teal-500'),
-        ('outros_acum', 'Outros', 'purple-600')
-    ] %}
-    {% set valor = resumo[key] if resumo and key in resumo else 0 %}
-    <div class="bg-white p-4 rounded shadow text-center border-l-4 border-{{ cor }}">
-        <h3 class="text-{{ cor }} font-bold">{{ label }}</h3>
-        <p class="text-xl font-semibold">R$ {{ "%.1f"|format(valor|float)|replace('.', ',') }}Bi</p>
-        <p class="text-sm {{ 'text-green-600' if valor > 0 else 'text-red-600' }}">
-            {{ 'Entrada líquida' if valor > 0 else 'Saída líquida' }}
-        </p>
+    {% if imagem %}
+    <div class="bg-white p-6 rounded-xl shadow">
+        <img src="data:image/png;base64,{{ imagem }}" alt="Gráfico de Fluxo de Investidores" class="w-full rounded">
     </div>
-    {% endfor %}
-</section>
+    {% endif %}
 
-            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-blue-800">
-                <h3 class="text-blue-800 font-bold">Estrangeiro</h3>
-                <p class="text-xl font-semibold">R$ 1,7Bi</p>
-                <p class="text-sm text-red-600">Saída líquida</p>
-            </div>
-            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-orange-500">
-                <h3 class="text-orange-600 font-bold">Institucional</h3>
-                <p class="text-xl font-semibold">R$ 0,3Bi</p>
-                <p class="text-sm text-red-600">Saída líquida</p>
-            </div>
-            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-green-600">
-                <h3 class="text-green-600 font-bold">Pessoa Física</h3>
-                <p class="text-xl font-semibold">R$ 2,8Bi</p>
-                <p class="text-sm text-green-600">Entrada líquida</p>
-            </div>
-            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-teal-500">
-                <h3 class="text-teal-600 font-bold">Inst. Financeira</h3>
-                <p class="text-xl font-semibold">R$ 0,5Bi</p>
-                <p class="text-sm text-red-600">Saída líquida</p>
-            </div>
-            <div class="bg-white p-4 rounded shadow text-center border-l-4 border-purple-500">
-                <h3 class="text-purple-600 font-bold">Outros</h3>
-                <p class="text-xl font-semibold">R$ 0,1Bi</p>
-                <p class="text-sm text-green-600">Entrada líquida</p>
-            </div>
-        </section>
-
-        <section class="grid md:grid-cols-2 gap-6 mt-12">
-            <div class="bg-white rounded-xl p-6 shadow space-y-3">
-                <h2 class="font-bold text-lg mb-2">📘 Definições dos Investidores</h2>
-                <p><strong class="text-blue-800">Estrangeiro:</strong> Fundos e investidores internacionais.</p>
-                <p><strong class="text-orange-600">Institucional:</strong> Fundos de pensão, seguradoras, etc.</p>
-                <p><strong class="text-green-600">Pessoa Física:</strong> Investidores individuais na Bolsa.</p>
-                <p><strong class="text-teal-600">Inst. Financeira:</strong> Bancos e corretoras.</p>
-                <p><strong class="text-purple-600">Outros:</strong> Empresas, governo e não categorizados.</p>
-            </div>
-            <div class="bg-white rounded-xl p-6 shadow space-y-4">
-                <h2 class="font-bold text-lg mb-2">📊 Análise Atual</h2>
-                <div class="bg-red-100 border-l-4 border-red-500 p-3">
-                    <p class="font-semibold text-red-700">Fluxo Estrangeiro: Saída</p>
-                    <p class="text-sm">Investidores estrangeiros reduziram posições.</p>
-                </div>
-                <div class="bg-red-100 border-l-4 border-red-500 p-3">
-                    <p class="font-semibold text-red-700">Institucional: Saída</p>
-                    <p class="text-sm">Institucionais reduziram exposição.</p>
-                </div>
-                <div class="bg-green-100 border-l-4 border-green-600 p-3">
-                    <p class="font-semibold text-green-700">Pessoa Física: Entrada</p>
-                    <p class="text-sm">Aproveitando oportunidades de compra.</p>
-                </div>
-            </div>
-        </section>
-
-        <footer class="text-center text-sm text-gray-500 mt-10">
-            <p><strong>Fonte:</strong> B3 – Dados atualizados diariamente</p>
-            <p>@alan_richard – Dashboard Fluxo de Investidores • Valores em bilhões de reais</p>
-        </footer>
-    </main>
+    <footer class="text-center text-sm text-gray-500 mt-10">
+        <p><strong>Fonte:</strong> B3 – Dados atualizados diariamente</p>
+        <p>@alan_richard – Dashboard Fluxo de Investidores • Valores em bilhões de reais</p>
+    </footer>
+</main>
 </body>
 </html>

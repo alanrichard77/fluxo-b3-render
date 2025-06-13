@@ -6,13 +6,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
-    <div class="bg-white p-10 rounded-xl shadow-xl w-full max-w-sm">
-        <h2 class="text-xl font-bold text-center mb-6">🔐 Acesso Restrito</h2>
-        {% if erro %}<p class="text-red-600 text-center font-semibold">Senha incorreta.</p>{% endif %}
-        <form method="POST" class="flex flex-col gap-4 mt-4">
-            <input type="password" name="senha" placeholder="Digite a senha" required class="border p-3 rounded w-full" />
-            <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white p-3 rounded font-semibold">Entrar</button>
-        </form>
-    </div>
+<div class="bg-white p-10 rounded-xl shadow-xl w-full max-w-sm">
+    <h2 class="text-xl font-bold text-center mb-6">🔐 Acesso Restrito</h2>
+    {% if erro %}<p class="text-red-600 text-center font-semibold">Senha incorreta.</p>{% endif %}
+    <form method="POST" class="flex flex-col gap-4 mt-4">
+        <input type="password" name="senha" placeholder="Digite a senha" required class="border p-3 rounded w-full" />
+        <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white p-3 rounded font-semibold">Entrar</button>
+    </form>
+</div>
 </body>
 </html>

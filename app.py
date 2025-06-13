@@ -34,9 +34,9 @@ def login():
 @app.route('/home', methods=['GET', 'POST'])
 def home():
     if request.method == 'POST':
-        grafico, resumo = gerar_grafico()
-        return render_template('home.html', imagem=grafico, resumo=resumo)
-    return render_template('home.html', imagem=None)
+        imagem, resumo = gerar_grafico()
+        return render_template('home.html', imagem=imagem, resumo=resumo)
+    return render_template('home.html', imagem=None, resumo={})
 
 def gerar_grafico():
     start_date = '2025-01-01'
@@ -74,51 +74,23 @@ def gerar_grafico():
     ax1.grid(True, linestyle=':', linewidth=0.5, alpha=0.7)
     for i, col in enumerate(ordem_legenda):
         if col in df_final.columns:
-            ax1.plot(df_final['data'], df_final[col], linewidth=2.5, label=labels_dict[col], color=cores[i])
+            ax1.plot(df_final['data'], df_final[col], linewidth=2.5, color=cores[i])
     ax1.set_ylabel('Acumulado (R$ bilhões)', fontsize=13)
-    ax1.yaxis.set_major_locator(mticker.MultipleLocator(5))
     ax2 = ax1.twinx()
-    ax2.plot(df_final['data'], df_final['ibovespa'], color='#1c1c1c', linestyle='--', linewidth=2, label='Ibovespa')
+    ax2.plot(df_final['data'], df_final['ibovespa'], color='#1c1c1c', linestyle='--', linewidth=2)
     ax2.set_ylabel('Ibovespa (pts)', fontsize=13)
-    min_ibov = int(df_final['ibovespa'].min() // 2500 * 2500)
-    max_ibov = int(df_final['ibovespa'].max() // 2500 * 2500 + 2500)
-    ax2.set_ylim(min_ibov, max_ibov)
-    ax2.yaxis.set_major_locator(mticker.MultipleLocator(2500))
 
-    datas = df_final['data'].tolist()
-    tick_spacing = len(datas) // 10
-    ax1.set_xticks([datas[i] for i in range(0, len(datas), tick_spacing)])
-    ax1.set_xticklabels([datas[i].strftime('%Y-%m') for i in range(0, len(datas), tick_spacing)], rotation=0)
-    
-
-    linhas = [ax1.plot([],[], color=cores[i], linewidth=2.5)[0] for i in range(len(ordem_legenda))]
-    linhas += [ax2.plot([],[], color='#1c1c1c', linestyle='--', linewidth=2)[0]]
-    legendas = list(labels_dict.values()) + ['Ibovespa']
-    
-    ax1.legend(linhas, legendas, loc='upper left', fontsize=12, frameon=True)
-
-    # Marca d'água central no gráfico
     plt.text(0.5, 0.5, '@alan_richard', fontsize=60, color='gray', alpha=0.07,
              ha='center', va='center', transform=plt.gcf().transFigure)
-
     plt.tight_layout()
 
-
-    linha_base = 0.110
-    espaco = 0.012
-                                
-    plt.tight_layout()
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
-    # Obter valores acumulados mais recentes por categoria
+    buf.seek(0)
+    encoded = base64.b64encode(buf.read()).decode('utf-8')
+
     resumo = {}
     for col in ordem_legenda:
         resumo[col] = df_final[col].dropna().iloc[-1] if col in df_final.columns else 0
 
     return encoded, resumo
-
-    buf.seek(0)
-    return base64.b64encode(buf.read()).decode('utf-8')
-
-if __name__ == '__main__':
-    app.run()
