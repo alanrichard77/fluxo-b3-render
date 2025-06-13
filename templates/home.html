@@ -2,35 +2,35 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard Fluxo B3</title>
+    <title>Fluxo de Investidores B3</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800">
-<header class="bg-gradient-to-r from-blue-900 to-blue-700 p-6 text-white text-center shadow">
-    <h1 class="text-3xl font-bold">📊 Fluxo de Investidores B3</h1>
-    <p class="text-sm mt-1">Acompanhe o movimento de capital no mercado brasileiro dados mais recentes</p>
+<body class="bg-[#111827] text-white">
+<header class="bg-gradient-to-r from-blue-900 to-blue-700 p-6 text-center shadow-lg">
+    <h1 class="text-3xl font-bold drop-shadow">Fluxo de Investidores B3</h1>
+    <p class="text-sm mt-1 text-gray-200">Acompanhe o movimento de capital no mercado</p>
 </header>
 
 <main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
     <form method="POST" class="flex justify-center mb-6">
-        <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-3 px-6 rounded">
+        <button type="submit" class="bg-blue-800 hover:bg-blue-900 text-white font-semibold py-3 px-6 rounded shadow">
             🔄 Atualizar Gráfico
         </button>
     </form>
 
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {% for key, label, cor in [
-            ('estrangeiro_acum', 'Estrangeiro', 'blue-800'),
-            ('institucional_acum', 'Institucional', 'orange-600'),
-            ('pessoafisica_acum', 'Pessoa Física', 'green-600'),
-            ('instfinanceira_acum', 'Inst. Financeira', 'teal-500'),
-            ('outros_acum', 'Outros', 'purple-600')
+            ('estrangeiro_acum', 'Estrangeiro', 'blue-500'),
+            ('institucional_acum', 'Institucional', 'orange-500'),
+            ('pessoafisica_acum', 'Pessoa Física', 'green-500'),
+            ('instfinanceira_acum', 'Inst. Financeira', 'teal-400'),
+            ('outros_acum', 'Outros', 'purple-500')
         ] %}
         {% set valor = resumo[key] if resumo and key in resumo else 0 %}
-        <div class="bg-white p-4 rounded shadow text-center border-l-4 border-{{ cor }}">
-            <h3 class="text-{{ cor }} font-bold">{{ label }}</h3>
-            <p class="text-xl font-semibold">R$ {{ "%.1f"|format(valor|float)|replace('.', ',') }}Bi</p>
-            <p class="text-sm {{ 'text-green-600' if valor > 0 else 'text-red-600' }}">
+        <div class="bg-[#1F2937] p-4 rounded-lg shadow-lg text-center border-l-4 border-{{ cor }}">
+            <h3 class="text-{{ cor }} font-bold drop-shadow">{{ label }}</h3>
+            <p class="text-xl font-semibold drop-shadow">R$ {{ "%.1f"|format(valor|float)|replace('.', ',') }}Bi</p>
+            <p class="text-sm {{ 'text-green-400' if valor > 0 else 'text-red-400' }}">
                 {{ 'Entrada líquida' if valor > 0 else 'Saída líquida' }}
             </p>
         </div>
@@ -38,14 +38,14 @@
     </section>
 
     {% if imagem %}
-    <div class="bg-white p-6 rounded-xl shadow">
+    <div class="bg-[#1F2937] p-6 rounded-xl shadow">
         <img src="data:image/png;base64,{{ imagem }}" alt="Gráfico de Fluxo de Investidores" class="w-full rounded">
     </div>
     {% endif %}
 
-    <footer class="text-center text-sm text-gray-500 mt-10">
-        <p><strong>Fonte:</strong> B3 – Dados atualizados diariamente</p>
-        <p>@alan_richard – Dashboard Fluxo de Investidores • Valores em bilhões de reais</p>
+    <footer class="text-center text-sm text-gray-400 border-t border-gray-700 pt-6 mt-6">
+        <p><strong>Fonte:</strong> B3 e Dados de Mercado</p>
+        <p><a href="https://www.instagram.com/alan_richard" target="_blank">@alan_richard</a> – Dashboard Fluxo de Investidores • Valores em bilhões de reais</p>
     </footer>
 </main>
 </body>

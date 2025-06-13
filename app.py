@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request
 import pandas as pd
 import matplotlib.pyplot as plt
 import yfinance as yf
@@ -7,7 +7,6 @@ import io, base64, unicodedata
 import matplotlib.ticker as mticker
 
 app = Flask(__name__)
-senha_sistema = "123456"
 
 def normalize_colname(col):
     col = str(col)
@@ -22,16 +21,6 @@ def parse_valor(valor):
     return float(v)
 
 @app.route('/', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        senha = request.form['senha']
-        if senha == senha_sistema:
-            return redirect(url_for('home'))
-        else:
-            return render_template('login.html', erro=True)
-    return render_template('login.html')
-
-@app.route('/home', methods=['GET', 'POST'])
 def home():
     if request.method == 'POST':
         imagem, resumo = gerar_grafico()
@@ -67,7 +56,7 @@ def gerar_grafico():
         'instfinanceira_acum': "Inst. Financeira",
         'outros_acum': "Outros"
     }
-    cores = ['#152955', '#e77730', '#174a28', '#48b5df', '#9936a3']
+    cores = ['#3b82f6', '#f97316', '#22c55e', '#06b6d4', '#a855f7']
     ordem_legenda = list(labels_dict.keys())
 
     fig, ax1 = plt.subplots(figsize=(16, 9))
@@ -76,16 +65,33 @@ def gerar_grafico():
         if col in df_final.columns:
             ax1.plot(df_final['data'], df_final[col], linewidth=2.5, color=cores[i])
     ax1.set_ylabel('Acumulado (R$ bilhões)', fontsize=13)
+
     ax2 = ax1.twinx()
-    ax2.plot(df_final['data'], df_final['ibovespa'], color='#1c1c1c', linestyle='--', linewidth=2)
+    ax2.plot(df_final['data'], df_final['ibovespa'], color='white', linestyle='--', linewidth=2, label='Ibovespa')
     ax2.set_ylabel('Ibovespa (pts)', fontsize=13)
+    min_ibov = int(df_final['ibovespa'].min() // 2500 * 2500)
+    max_ibov = int(df_final['ibovespa'].max() // 2500 * 2500 + 2500)
+    ax2.set_ylim(min_ibov, max_ibov)
+    ax2.yaxis.set_major_locator(mticker.MultipleLocator(2500))
+    import matplotlib.ticker as ticker
+    ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x):,}'.replace(',', '.')))
+
+    datas = df_final['data'].tolist()
+    xticks = [datas[i] for i in range(0, len(datas), 7) if i < len(datas)]
+    ax1.set_xticks(xticks)
+    ax1.set_xticklabels([d.strftime('%d/%m') for d in xticks], rotation=0)
+
+    linhas = [ax1.plot([],[], color=cores[i], linewidth=2.5)[0] for i in range(len(ordem_legenda))]
+    linhas += [ax2.plot([],[], color='white', linestyle='--', linewidth=2)[0]]
+    legendas = list(labels_dict.values()) + ['Ibovespa']
+    ax1.legend(linhas, legendas, loc='upper left', fontsize=12, frameon=True)
 
     plt.text(0.5, 0.5, '@alan_richard', fontsize=60, color='gray', alpha=0.07,
              ha='center', va='center', transform=plt.gcf().transFigure)
     plt.tight_layout()
 
     buf = io.BytesIO()
-    plt.savefig(buf, format="png")
+    plt.savefig(buf, format="png", facecolor='#111827')
     buf.seek(0)
     encoded = base64.b64encode(buf.read()).decode('utf-8')
 
