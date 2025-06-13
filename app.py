@@ -56,19 +56,25 @@ def gerar_grafico():
         'instfinanceira_acum': "Inst. Financeira",
         'outros_acum': "Outros"
     }
-    cores = ['#3b82f6', '#f97316', '#22c55e', '#06b6d4', '#a855f7']
+    cores = ['#3b82f6', '#f97316', '#22c55e', '#ec4899', '#a855f7']  # tons contrastantes
     ordem_legenda = list(labels_dict.keys())
 
     fig, ax1 = plt.subplots(figsize=(16, 9))
-    ax1.grid(True, linestyle=':', linewidth=0.5, alpha=0.7)
+    fig.patch.set_facecolor('#0f172a')  # fundo externo
+    ax1.set_facecolor('#1e293b')  # fundo interno
+    ax1.grid(True, linestyle=':', linewidth=0.5, alpha=0.4)
+
     for i, col in enumerate(ordem_legenda):
         if col in df_final.columns:
-            ax1.plot(df_final['data'], df_final[col], linewidth=2.5, color=cores[i])
-    ax1.set_ylabel('Acumulado (R$ bilhões)', fontsize=13)
+            ax1.plot(df_final['data'], df_final[col], linewidth=2.5, label=labels_dict[col], color=cores[i])
+
+    ax1.set_ylabel('Acumulado (R$ bilhões)', fontsize=13, color='white')
+    ax1.tick_params(colors='white')
 
     ax2 = ax1.twinx()
     ax2.plot(df_final['data'], df_final['ibovespa'], color='white', linestyle='--', linewidth=2, label='Ibovespa')
-    ax2.set_ylabel('Ibovespa (pts)', fontsize=13)
+    ax2.set_ylabel('Ibovespa (pts)', fontsize=13, color='white')
+    ax2.tick_params(colors='white')
     min_ibov = int(df_final['ibovespa'].min() // 2500 * 2500)
     max_ibov = int(df_final['ibovespa'].max() // 2500 * 2500 + 2500)
     ax2.set_ylim(min_ibov, max_ibov)
@@ -79,19 +85,19 @@ def gerar_grafico():
     datas = df_final['data'].tolist()
     xticks = [datas[i] for i in range(0, len(datas), 7) if i < len(datas)]
     ax1.set_xticks(xticks)
-    ax1.set_xticklabels([d.strftime('%d/%m') for d in xticks], rotation=0)
+    ax1.set_xticklabels([d.strftime('%d/%m') for d in xticks], color='white', rotation=0)
 
-    linhas = [ax1.plot([],[], color=cores[i], linewidth=2.5)[0] for i in range(len(ordem_legenda))]
-    linhas += [ax2.plot([],[], color='white', linestyle='--', linewidth=2)[0]]
-    legendas = list(labels_dict.values()) + ['Ibovespa']
-    ax1.legend(linhas, legendas, loc='upper left', fontsize=12, frameon=True)
+    linhas = ax1.get_lines() + ax2.get_lines()
+    labels = [l.get_label() for l in linhas]
+    ax1.legend(linhas, labels, loc='upper left', fontsize=12, facecolor='#1e293b', edgecolor='white', labelcolor='white')
 
-    plt.text(0.5, 0.5, '@alan_richard', fontsize=60, color='gray', alpha=0.07,
+    plt.text(0.5, 0.5, '@alan_richard', fontsize=60, color='gray', alpha=0.08,
              ha='center', va='center', transform=plt.gcf().transFigure)
+
     plt.tight_layout()
 
     buf = io.BytesIO()
-    plt.savefig(buf, format="png", facecolor='#111827')
+    plt.savefig(buf, format="png", facecolor=fig.get_facecolor())
     buf.seek(0)
     encoded = base64.b64encode(buf.read()).decode('utf-8')
 
