@@ -23,9 +23,9 @@ def parse_valor(valor):
 @app.route('/', methods=['GET', 'POST'])
 def home():
     if request.method == 'POST':
-        imagem, resumo = gerar_grafico()
-        return render_template('home.html', imagem=imagem, resumo=resumo)
-    return render_template('home.html', imagem=None, resumo={})
+        imagem, resumo, last_date = gerar_grafico()
+        return render_template('home.html', imagem=imagem, resumo=resumo, last_date=last_date)
+    return render_template('home.html', imagem=None, resumo={}, last_date=None)
 
 def gerar_grafico():
     start_date = '2025-01-01'
@@ -56,12 +56,12 @@ def gerar_grafico():
         'instfinanceira_acum': "Inst. Financeira",
         'outros_acum': "Outros"
     }
-    cores = ['#3b82f6', '#f97316', '#22c55e', '#ec4899', '#a855f7']  # tons contrastantes
+    cores = ['#3b82f6', '#f97316', '#22c55e', '#ec4899', '#a855f7']
     ordem_legenda = list(labels_dict.keys())
 
     fig, ax1 = plt.subplots(figsize=(16, 9))
-    fig.patch.set_facecolor('#0f172a')  # fundo externo
-    ax1.set_facecolor('#1e293b')  # fundo interno
+    fig.patch.set_facecolor('#0f172a')
+    ax1.set_facecolor('#1e293b')
     ax1.grid(True, linestyle=':', linewidth=0.5, alpha=0.4)
 
     for i, col in enumerate(ordem_legenda):
@@ -95,7 +95,6 @@ def gerar_grafico():
              ha='center', va='center', transform=plt.gcf().transFigure)
 
     plt.tight_layout()
-
     buf = io.BytesIO()
     plt.savefig(buf, format="png", facecolor=fig.get_facecolor())
     buf.seek(0)
@@ -105,4 +104,5 @@ def gerar_grafico():
     for col in ordem_legenda:
         resumo[col] = df_final[col].dropna().iloc[-1] if col in df_final.columns else 0
 
-    return encoded, resumo
+    last_date = df_final['data'].dropna().iloc[-1].strftime('%d/%m/%Y')
+    return encoded, resumo, last_date

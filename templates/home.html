@@ -19,17 +19,18 @@
     </form>
 
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {% for key, label, cor in [
-            ('estrangeiro_acum', 'Estrangeiro', 'blue-400'),
-            ('institucional_acum', 'Institucional', 'orange-400'),
-            ('pessoafisica_acum', 'Pessoa Física', 'green-400'),
-            ('instfinanceira_acum', 'Inst. Financeira', 'pink-400'),
-            ('outros_acum', 'Outros', 'purple-400')
+        {% for key, label, cor, desc in [
+            ('estrangeiro_acum', 'Estrangeiro', 'blue-400', 'fundos e investidores de fora do Brasil'),
+            ('institucional_acum', 'Institucional', 'orange-400', 'fundos de pensão, seguradoras, etc.'),
+            ('pessoafisica_acum', 'Pessoa Física', 'green-400', 'investidores individuais'),
+            ('instfinanceira_acum', 'Inst. Financeira', 'pink-400', 'bancos e corretoras'),
+            ('outros_acum', 'Outros', 'purple-400', 'empresas, governo e não categorizados')
         ] %}
         {% set valor = resumo[key] if resumo and key in resumo else 0 %}
         <div class="bg-[#1e293b] p-4 rounded-xl shadow-xl border-l-4 border-{{ cor }} transition">
             <h3 class="text-{{ cor }} font-bold text-md mb-1">{{ label }}</h3>
             <p class="text-xl font-semibold text-white drop-shadow">R$ {{ "%.1f"|format(valor|float)|replace('.', ',') }}Bi</p>
+            <p class="text-xs text-gray-400 italic mb-1">{{ desc }}</p>
             <p class="text-sm {{ 'text-green-400' if valor > 0 else 'text-red-400' }}">
                 {{ 'Entrada líquida' if valor > 0 else 'Saída líquida' }}
             </p>
@@ -44,7 +45,7 @@
     {% endif %}
 
     <footer class="text-center text-sm text-slate-400 border-t border-slate-700 pt-6 mt-6">
-        <p><strong>Fonte:</strong> B3 e Dados de Mercado</p>
+        <p><strong>Fonte:</strong> B3 e Dados de Mercado • Último dado de fluxo: {{ last_date if last_date else '-' }}</p>
         <p><a href="https://www.instagram.com/alan_richard" class="text-blue-400 hover:underline" target="_blank">@alan_richard</a> – Dashboard Fluxo de Investidores • Valores em bilhões de reais</p>
     </footer>
 </main>
