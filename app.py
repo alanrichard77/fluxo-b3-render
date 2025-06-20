@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -20,35 +21,32 @@ def parse_valor(valor):
     if v in ['', '-', 'nan']: return 0.0
     return float(v)
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    if request.method == 'POST':
-        imagem, resumo, last_date = gerar_grafico()
-        return render_template('home.html', imagem=imagem, resumo=resumo, last_date=last_date)
-    return render_template('home.html', imagem=None, resumo={}, last_date=None)
-
-def gerar_grafico():
-    start_date = '2025-01-01'
-    end_date = datetime.today().strftime('%Y-%m-%d')
-    ibov = yf.download('^BVSP', start=start_date, end=end_date)
-    if isinstance(ibov.columns, pd.MultiIndex):
-        ibov.columns = [col[0] for col in ibov.columns]
-    ibov = ibov.reset_index()
-    ibov = ibov.rename(columns={'Date': 'data', 'Close': 'ibovespa'})
+def obter_dados_fluxo_e_ibov(start_date, end_date):
+    ibov = yf.download('^BVSP', start=start_date, end=end_date).reset_index()
+    col_fechamento = [c for c in ibov.columns if 'close' in c.lower()][0]
+    col_data = [c for c in ibov.columns if 'date' in c.lower()][0]
+    ibov = ibov.rename(columns={col_fechamento: 'ibovespa', col_data: 'data'})
+    ibov['data'] = pd.to_datetime(ibov['data'])
+    ibov = ibov[['data', 'ibovespa']]
 
     url = 'https://www.dadosdemercado.com.br/fluxo'
     tables = pd.read_html(url, decimal=',', thousands='.')
     df = tables[0]
     df.columns = [normalize_colname(col) for col in df.columns]
     df['data'] = pd.to_datetime(df['data'], errors='coerce', dayfirst=True)
-    df = df[(df['data'] >= pd.to_datetime(start_date)) & (df['data'] <= pd.to_datetime(end_date))].sort_values('data')
+    df = df.dropna(subset=['data'])
+    df = df.sort_values('data')
+
     colunas_fluxo = [c for c in df.columns if any(x in c for x in ['estrangeiro', 'institucional', 'pessoafisica', 'instfinanceira', 'outros'])]
     for col in colunas_fluxo:
         df[col+'_bi'] = df[col].apply(parse_valor)
         df[col+'_acum'] = df[col+'_bi'].cumsum()
+
     df_final = pd.merge(df, ibov, how='left', on='data')
     df_final['ibovespa'] = df_final['ibovespa'].fillna(method='ffill')
+    return df_final
 
+def gerar_grafico(df):
     labels_dict = {
         'estrangeiro_acum': "Estrangeiro",
         'institucional_acum': "Institucional",
@@ -56,53 +54,65 @@ def gerar_grafico():
         'instfinanceira_acum': "Inst. Financeira",
         'outros_acum': "Outros"
     }
-    cores = ['#3b82f6', '#f97316', '#22c55e', '#ec4899', '#a855f7']
-    ordem_legenda = list(labels_dict.keys())
+    cores = ['#60a5fa', '#fb923c', '#4ade80', '#f472b6', '#c084fc']
 
+    plt.style.use('dark_background')
     fig, ax1 = plt.subplots(figsize=(16, 9))
-    fig.patch.set_facecolor('#0f172a')
-    ax1.set_facecolor('#1e293b')
-    ax1.grid(True, linestyle=':', linewidth=0.5, alpha=0.4)
+    ax1.grid(True, linestyle=':', linewidth=0.5, alpha=0.7)
 
-    for i, col in enumerate(ordem_legenda):
-        if col in df_final.columns:
-            ax1.plot(df_final['data'], df_final[col], linewidth=2.5, label=labels_dict[col], color=cores[i])
-
-    ax1.set_ylabel('Acumulado (R$ bilhões)', fontsize=13, color='white')
-    ax1.tick_params(colors='white')
+    for i, col in enumerate(labels_dict):
+        if col in df.columns:
+            ax1.plot(df['data'], df[col], label=labels_dict[col], linewidth=2.5, color=cores[i])
 
     ax2 = ax1.twinx()
-    ax2.plot(df_final['data'], df_final['ibovespa'], color='white', linestyle='--', linewidth=2, label='Ibovespa')
-    ax2.set_ylabel('Ibovespa (pts)', fontsize=13, color='white')
-    ax2.tick_params(colors='white')
-    min_ibov = int(df_final['ibovespa'].min() // 2500 * 2500)
-    max_ibov = int(df_final['ibovespa'].max() // 2500 * 2500 + 2500)
-    ax2.set_ylim(min_ibov, max_ibov)
+    ax2.plot(df['data'], df['ibovespa'], '--', color='gray', linewidth=2, label='Ibovespa')
+    ax1.set_ylabel('R$ bilhões')
+    ax2.set_ylabel('Ibovespa (pts)')
+    ax2.set_ylim(df['ibovespa'].min() // 2500 * 2500, df['ibovespa'].max() // 2500 * 2500 + 2500)
     ax2.yaxis.set_major_locator(mticker.MultipleLocator(2500))
-    import matplotlib.ticker as ticker
-    ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x):,}'.replace(',', '.')))
+    ax2.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f'{int(x):,}'.replace(',', '.')))
 
-    datas = df_final['data'].tolist()
-    xticks = [datas[i] for i in range(0, len(datas), 7) if i < len(datas)]
-    ax1.set_xticks(xticks)
-    ax1.set_xticklabels([d.strftime('%d/%m') for d in xticks], color='white', rotation=0)
+    ax1.legend(loc='upper left')
+    ax2.legend(loc='upper right')
+    ax1.set_xticks(df['data'][::7])
+    ax1.set_xticklabels([d.strftime('%d/%m') for d in df['data'][::7]])
 
-    linhas = ax1.get_lines() + ax2.get_lines()
-    labels = [l.get_label() for l in linhas]
-    ax1.legend(linhas, labels, loc='upper left', fontsize=12, facecolor='#1e293b', edgecolor='white', labelcolor='white')
-
-    plt.text(0.5, 0.5, '@alan_richard', fontsize=60, color='gray', alpha=0.08,
-             ha='center', va='center', transform=plt.gcf().transFigure)
+    ax1.text(0.5, 0.5, '@alan_richard', transform=ax1.transAxes, fontsize=50,
+             color='gray', ha='center', va='center', alpha=0.12, weight='bold', rotation=15)
 
     plt.tight_layout()
     buf = io.BytesIO()
-    plt.savefig(buf, format="png", facecolor=fig.get_facecolor())
-    buf.seek(0)
-    encoded = base64.b64encode(buf.read()).decode('utf-8')
+    plt.savefig(buf, format="png", bbox_inches='tight')
+    plt.close()
+    return base64.b64encode(buf.getvalue()).decode('utf-8')
 
+def calcular_resumo(df):
     resumo = {}
-    for col in ordem_legenda:
-        resumo[col] = df_final[col].dropna().iloc[-1] if col in df_final.columns else 0
+    for col in ['estrangeiro_acum', 'institucional_acum', 'pessoafisica_acum', 'instfinanceira_acum', 'outros_acum']:
+        resumo[col] = df[col].iloc[-1] if col in df.columns else 0.0
+    return resumo
 
-    last_date = df_final['data'].dropna().iloc[-1].strftime('%d/%m/%Y')
-    return encoded, resumo, last_date
+def resumo_mensal(df):
+    df['ano_mes'] = df['data'].dt.to_period('M')
+    categorias = ['estrangeiro', 'institucional', 'pessoafisica', 'instfinanceira', 'outros']
+    resumo = []
+
+    for mes, grupo in df.groupby('ano_mes'):
+        saldos = {cat: grupo[cat+'_bi'].sum() for cat in categorias}
+        maior_compra = max(saldos.items(), key=lambda x: x[1])
+        maior_venda = min(saldos.items(), key=lambda x: x[1])
+        resumo.append(f"{mes.strftime('%b/%Y')}: 📈 {maior_compra[0].capitalize()} +R$ {maior_compra[1]:.2f} bi | 📉 {maior_venda[0].capitalize()} -R$ {abs(maior_venda[1]):.2f} bi")
+    return resumo
+
+@app.route("/", methods=["GET", "POST"])
+def home():
+    start_date = request.form.get("data_inicio") if request.method == "POST" else "2025-01-01"
+    end_date = request.form.get("data_fim") if request.method == "POST" else datetime.today().strftime("%Y-%m-%d")
+
+    df = obter_dados_fluxo_e_ibov(start_date, end_date)
+    imagem = gerar_grafico(df)
+    resumo = calcular_resumo(df)
+    ult_data = df['data'].max().strftime('%d/%m/%Y')
+    resumo_mensal_str = resumo_mensal(df)
+
+    return render_template("home.html", imagem=imagem, resumo=resumo, last_date=ult_data, resumo_mensal=resumo_mensal_str)
