@@ -5,65 +5,29 @@
     <meta charset="UTF-8">
     <title>Fluxo de Investidores B3</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0f172a;
-            color: #f1f5f9;
-            margin: 0;
-            padding: 0;
+        body { background-color: #0f172a; color: #f8fafc; font-family: Arial; margin: 0; padding: 0; }
+        header { text-align: center; padding: 20px; background: #1e293b; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        h1 { font-size: 28px; margin-bottom: 5px; }
+        p { font-size: 14px; color: #94a3b8; }
+        form { text-align: center; margin: 20px 0; }
+        input[type=date], button {
+            background: #1e293b; color: white; padding: 6px 12px; border-radius: 6px;
+            border: 1px solid #334155; margin: 0 5px;
         }
-        header {
-            text-align: center;
-            padding: 30px 10px 10px;
-            background-color: #1e293b;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
-        header h1 {
-            font-size: 30px;
-            margin: 0;
-        }
-        header p {
-            font-size: 14px;
-            color: #94a3b8;
-            margin-top: 4px;
-        }
-        .grafico {
-            text-align: center;
-            margin-top: 30px;
-        }
-        .cards {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px;
-            margin: 30px 0;
-        }
+        .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
         .card {
-            background-color: #1e293b;
-            padding: 20px;
-            border-radius: 12px;
-            width: 220px;
+            background-color: #1e293b; padding: 15px; border-radius: 12px; width: 220px;
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
-        .card h2 {
-            margin: 0 0 10px;
-            font-size: 18px;
-        }
-        .card p {
-            margin: 0;
-            font-size: 13px;
-            color: #cbd5e1;
-        }
+        .card h2 { margin: 0 0 8px; font-size: 16px; }
+        .card p { margin: 0; font-size: 13px; color: #cbd5e1; }
+        .container { display: flex; flex-direction: row; justify-content: space-between; padding: 0 40px 40px; }
+        .grafico { flex: 3; text-align: center; }
+        .resumo-lateral { flex: 1; padding: 20px; background: #1e1e2e; border-radius: 10px; margin-left: 20px; }
         footer {
-            text-align: center;
-            font-size: 13px;
-            padding: 20px;
-            color: #94a3b8;
+            text-align: center; font-size: 13px; padding: 15px; color: #94a3b8;
         }
-        a {
-            color: #60a5fa;
-            text-decoration: none;
-        }
+        a { color: #60a5fa; text-decoration: none; }
     </style>
 </head>
 <body>
@@ -72,30 +36,37 @@
         <p>Acompanhe o movimento de capital no mercado</p>
     </header>
 
-    {% if imagem %}
-    <div class="grafico">
-        <img src="data:image/png;base64,{{ imagem }}" alt="Gráfico de Fluxo" style="max-width:90%;">
-    </div>
+    <form method="POST">
+        <label>Data Inicial: <input type="date" name="data_inicio" required></label>
+        <label>Data Final: <input type="date" name="data_fim" required></label>
+        <button type="submit">Atualizar Gráfico</button>
+    </form>
 
     <div class="cards">
-        {% for tipo, valor in resumo.items() %}
+        {% for player in cards %}
         <div class="card">
-            <h2>{{ tipo.replace('_acum', '').replace('pessoafisica','Pessoa Física').replace('institucional','Institucional').replace('estrangeiro','Estrangeiro').replace('instfinanceira','Inst. Financeira').replace('outros','Outros') }}</h2>
-            <p>{% if tipo.startswith('estrangeiro') %}Fundos e investidores de fora do Brasil
-               {% elif tipo.startswith('institucional') %}Fundos de pensão, seguradoras, etc.
-               {% elif tipo.startswith('pessoafisica') %}Investidores individuais
-               {% elif tipo.startswith('instfinanceira') %}Bancos e corretoras
-               {% elif tipo.startswith('outros') %}Empresas, governo e não categorizados
-               {% endif %}</p>
-            <p><strong>Saldo:</strong> R$ {{ "%.2f"|format(valor).replace(".", ",") }} bi</p>
+            <h2>{{ player.nome }}</h2>
+            <p>{{ player.resumo }}</p>
+            <p><strong>Saldo:</strong> {{ player.saldo }}</p>
         </div>
         {% endfor %}
     </div>
 
+    <div class="container">
+        <div class="grafico">
+            <img src="data:image/png;base64,{{ grafico }}" alt="Gráfico de Fluxo" style="max-width: 100%;">
+        </div>
+        <div class="resumo-lateral">
+            <h3>Resumo Mensal</h3>
+            {% for linha in resumo_mensal %}
+                <p>{{ linha }}</p>
+            {% endfor %}
+        </div>
+    </div>
+
     <footer>
-        Fonte: B3 e Dados de Mercado • Dados até {{ last_date }}<br>
+        Fonte: B3 e Dados de Mercado • Dados até {{ ultima_data }}<br>
         <a href="https://www.instagram.com/alan_richard" target="_blank">@alan_richard</a>
     </footer>
-    {% endif %}
 </body>
 </html>
