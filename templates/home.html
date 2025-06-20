@@ -1,72 +1,53 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <title>Fluxo de Investidores B3</title>
-    <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: Arial; margin: 0; padding: 0; }
-        header { text-align: center; padding: 20px; background: #1e293b; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        h1 { font-size: 28px; margin-bottom: 5px; }
-        p { font-size: 14px; color: #94a3b8; }
-        form { text-align: center; margin: 20px 0; }
-        input[type=date], button {
-            background: #1e293b; color: white; padding: 6px 12px; border-radius: 6px;
-            border: 1px solid #334155; margin: 0 5px;
-        }
-        .cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
-        .card {
-            background-color: #1e293b; padding: 15px; border-radius: 12px; width: 220px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-        .card h2 { margin: 0 0 8px; font-size: 16px; }
-        .card p { margin: 0; font-size: 13px; color: #cbd5e1; }
-        .container { display: flex; flex-direction: row; justify-content: space-between; padding: 0 40px 40px; }
-        .grafico { flex: 3; text-align: center; }
-        .resumo-lateral { flex: 1; padding: 20px; background: #1e1e2e; border-radius: 10px; margin-left: 20px; }
-        footer {
-            text-align: center; font-size: 13px; padding: 15px; color: #94a3b8;
-        }
-        a { color: #60a5fa; text-decoration: none; }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <header>
-        <h1>Fluxo de Investidores B3</h1>
-        <p>Acompanhe o movimento de capital no mercado</p>
-    </header>
+<body class="bg-[#0f172a] text-white">
+<header class="bg-gradient-to-r from-sky-900 to-indigo-900 p-6 text-center shadow-lg">
+    <h1 class="text-3xl font-bold drop-shadow-xl">Fluxo de Investidores B3</h1>
+    <p class="text-sm mt-1 text-slate-300">Acompanhe o movimento de capital no mercado</p>
+</header>
 
-    <form method="POST">
-        <label>Data Inicial: <input type="date" name="data_inicio" required></label>
-        <label>Data Final: <input type="date" name="data_fim" required></label>
-        <button type="submit">Atualizar Gráfico</button>
+<main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
+    <form method="POST" class="flex justify-center mb-6">
+        <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition">
+            🔄 Atualizar Gráfico
+        </button>
     </form>
 
-    <div class="cards">
-        {% for player in cards %}
-        <div class="card">
-            <h2>{{ player.nome }}</h2>
-            <p>{{ player.resumo }}</p>
-            <p><strong>Saldo:</strong> {{ player.saldo }}</p>
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {% for key, label, cor, desc in [
+            ('estrangeiro_acum', 'Estrangeiro', 'blue-400', 'fundos e investidores de fora do Brasil'),
+            ('institucional_acum', 'Institucional', 'orange-400', 'fundos de pensão, seguradoras, etc.'),
+            ('pessoafisica_acum', 'Pessoa Física', 'green-400', 'investidores individuais'),
+            ('instfinanceira_acum', 'Inst. Financeira', 'pink-400', 'bancos e corretoras'),
+            ('outros_acum', 'Outros', 'purple-400', 'empresas, governo e não categorizados')
+        ] %}
+        {% set valor = resumo[key] if resumo and key in resumo else 0 %}
+        <div class="bg-[#1e293b] p-4 rounded-xl shadow-xl border-l-4 border-{{ cor }} transition">
+            <h3 class="text-{{ cor }} font-bold text-md mb-1">{{ label }}</h3>
+            <p class="text-xl font-semibold text-white drop-shadow">R$ {{ "%.1f"|format(valor|float)|replace('.', ',') }}Bi</p>
+            <p class="text-xs text-gray-400 italic mb-1">{{ desc }}</p>
+            <p class="text-sm {{ 'text-green-400' if valor > 0 else 'text-red-400' }}">
+                {{ 'Entrada líquida' if valor > 0 else 'Saída líquida' }}
+            </p>
         </div>
         {% endfor %}
-    </div>
+    </section>
 
-    <div class="container">
-        <div class="grafico">
-            <img src="data:image/png;base64,{{ grafico }}" alt="Gráfico de Fluxo" style="max-width: 100%;">
-        </div>
-        <div class="resumo-lateral">
-            <h3>Resumo Mensal</h3>
-            {% for linha in resumo_mensal %}
-                <p>{{ linha }}</p>
-            {% endfor %}
-        </div>
+    {% if imagem %}
+    <div class="bg-[#1e293b] p-6 rounded-xl shadow-lg">
+        <img src="data:image/png;base64,{{ imagem }}" alt="Gráfico de Fluxo de Investidores" class="w-full rounded">
     </div>
+    {% endif %}
 
-    <footer>
-        Fonte: B3 e Dados de Mercado • Dados até {{ ultima_data }}<br>
-        <a href="https://www.instagram.com/alan_richard" target="_blank">@alan_richard</a>
+    <footer class="text-center text-sm text-slate-400 border-t border-slate-700 pt-6 mt-6">
+        <p><strong>Fonte:</strong> B3 e Dados de Mercado • Último dado de fluxo: {{ last_date if last_date else '-' }}</p>
+        <p><a href="https://www.instagram.com/alan_richard" class="text-blue-400 hover:underline" target="_blank">@alan_richard</a> – Dashboard Fluxo de Investidores • Valores em bilhões de reais</p>
     </footer>
+</main>
 </body>
 </html>
