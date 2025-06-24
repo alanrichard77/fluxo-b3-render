@@ -20,16 +20,14 @@ def parse_valor(valor):
     if v in ['', '-', 'nan']: return 0.0
     return float(v)
 
-
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    start_date = request.form.get('start_date') if request.method == 'POST' else None
-    end_date = request.form.get('end_date') if request.method == 'POST' else None
-    imagem, resumo, last_date = gerar_grafico(start_date, end_date)
-    return render_template('home.html', imagem=imagem, resumo=resumo, last_date=last_date, resumo_mensal=resumo_mensal)
+    if request.method == 'POST':
+        imagem, resumo, last_date = gerar_grafico()
+        return render_template('home.html', imagem=imagem, resumo=resumo, last_date=last_date)
+    return render_template('home.html', imagem=None, resumo={}, last_date=None)
 
-
-def gerar_grafico(start_date=None, end_date=None):
+def gerar_grafico():
     start_date = '2025-01-01'
     end_date = datetime.today().strftime('%Y-%m-%d')
     ibov = yf.download('^BVSP', start=start_date, end=end_date)
