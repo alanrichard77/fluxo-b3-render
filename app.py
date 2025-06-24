@@ -25,7 +25,7 @@ def parse_valor(valor):
 def home():
     start_date = request.form.get('start_date') if request.method == 'POST' else None
     end_date = request.form.get('end_date') if request.method == 'POST' else None
-    imagem, resumo, last_date, resumo_mensal = gerar_grafico(start_date, end_date)
+    imagem, resumo, last_date = gerar_grafico(start_date, end_date)
     return render_template('home.html', imagem=imagem, resumo=resumo, last_date=last_date, resumo_mensal=resumo_mensal)
 
 
@@ -49,7 +49,7 @@ def gerar_grafico(start_date=None, end_date=None):
         df[col+'_bi'] = df[col].apply(parse_valor)
         df[col+'_acum'] = df[col+'_bi'].cumsum()
     df_final = pd.merge(df, ibov, how='left', on='data')
-    df_final['ibovespa'] = df_final['ibovespa'].ffill()
+    df_final['ibovespa'] = df_final['ibovespa'].fillna(method='ffill')
 
     labels_dict = {
         'estrangeiro_acum': "Estrangeiro",
