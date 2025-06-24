@@ -49,7 +49,7 @@ def gerar_grafico(start_date=None, end_date=None):
         df[col+'_bi'] = df[col].apply(parse_valor)
         df[col+'_acum'] = df[col+'_bi'].cumsum()
     df_final = pd.merge(df, ibov, how='left', on='data')
-    df_final['ibovespa'] = df_final['ibovespa'].fillna(method='ffill')
+    df_final['ibovespa'] = df_final['ibovespa'].ffill()
 
     labels_dict = {
         'estrangeiro_acum': "Estrangeiro",
