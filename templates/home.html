@@ -12,17 +12,7 @@
 </header>
 
 <main class="max-w-7xl mx-auto px-4 py-10 space-y-10">
-    
-<form method="POST" class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-    <div class="text-sm text-white">
-        <label for="data_inicio" class="block mb-1 text-slate-300">Data Início</label>
-        <input type="date" name="data_inicio" class="rounded-lg px-3 py-1 bg-slate-800 text-white border border-slate-600">
-    </div>
-    <div class="text-sm text-white">
-        <label for="data_fim" class="block mb-1 text-slate-300">Data Fim</label>
-        <input type="date" name="data_fim" class="rounded-lg px-3 py-1 bg-slate-800 text-white border border-slate-600">
-    </div>
-
+    <form method="POST" class="flex justify-center mb-6">
         <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-xl shadow-md transition">
             🔄 Atualizar Gráfico
         </button>
@@ -61,23 +51,3 @@
 </main>
 </body>
 </html>
-    {% if resumo_mensal %}
-    <section class="mt-12 bg-slate-800 p-6 rounded-xl shadow-md text-sm">
-        <h2 class="text-lg font-bold mb-4 text-white drop-shadow">Resumo Mensal - Maior Comprador e Vendedor</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {% for mes, dados in resumo_mensal.items() %}
-            <div class="bg-slate-900 p-4 rounded-xl shadow border border-slate-700">
-                <h3 class="font-semibold text-indigo-400 mb-2">{{ mes }}</h3>
-                <p>
-                    <span class="text-green-400 font-bold">▲ {{ dados.maior_compra.categoria|capitalize }}</span>:
-                    R$ {{ "%.1f"|format(dados.maior_compra.valor)|replace(".", ",") }}Bi
-                </p>
-                <p>
-                    <span class="text-red-400 font-bold">▼ {{ dados.maior_venda.categoria|capitalize }}</span>:
-                    R$ {{ "%.1f"|format(dados.maior_venda.valor)|replace(".", ",") }}Bi
-                </p>
-            </div>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
