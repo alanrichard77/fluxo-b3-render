@@ -1,4 +1,6 @@
-flask
-yfinance
+Flask
 pandas
 matplotlib
+yfinance
+gunicorn
+lxml

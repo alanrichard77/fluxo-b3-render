@@ -1,89 +1,109 @@
 from flask import Flask, render_template, request
-from datetime import datetime
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import yfinance as yf
-import io
-import base64
-import numpy as np
+from datetime import datetime
+import io, base64, unicodedata
+import matplotlib.ticker as mticker
 
 app = Flask(__name__)
 
-def get_data(start_date, end_date):
-    ibov = yf.download('^BVSP', start=start_date, end=end_date)['Close'].reset_index()
-    ibov.columns = ['data', 'ibovespa']
+def normalize_colname(col):
+    col = str(col)
+    return ''.join(c for c in unicodedata.normalize('NFD', col)
+                   if unicodedata.category(c) != 'Mn').lower().replace(' ', '').replace('.', '')
+
+def parse_valor(valor):
+    v = str(valor).replace('r$', '').replace(' ', '').replace('.', '').replace(',', '.').strip().lower()
+    if 'mi' in v: return float(v.replace('mi', '')) / 1000
+    if 'bi' in v: return float(v.replace('bi', ''))
+    if v in ['', '-', 'nan']: return 0.0
+    return float(v)
+
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
+def home():
+    start_date = request.form.get('start_date')
+    end_date = request.form.get('end_date')
+    if start_date is None or end_date is None:
+        start_date = '2025-01-01'
+        end_date = datetime.today().strftime('%Y-%m-%d')
+    imagem, resumo, last_date, resumo_mensal = gerar_grafico(start_date, end_date)
+    return render_template('home.html', imagem=imagem, resumo=resumo, last_date=last_date, resumo_mensal=resumo_mensal)
+
+    ibov = yf.download('^BVSP', start=start_date, end=end_date)
+    if isinstance(ibov.columns, pd.MultiIndex):
+        ibov.columns = [col[0] for col in ibov.columns]
+    ibov = ibov.reset_index()
+    ibov = ibov.rename(columns={'Date': 'data', 'Close': 'ibovespa'})
+
     url = 'https://www.dadosdemercado.com.br/fluxo'
-    df = pd.read_html(url, decimal=',', thousands='.')[0]
-    df.columns = [c.lower() for c in df.columns]
-    df['data'] = pd.to_datetime(df['data'], dayfirst=True)
-    df = df[(df['data'] >= pd.to_datetime(start_date)) & (df['data'] <= pd.to_datetime(end_date))]
-    df = df.sort_values('data').reset_index(drop=True)
-    return ibov, df
+    tables = pd.read_html(url, decimal=',', thousands='.')
+    df = tables[0]
+    df.columns = [normalize_colname(col) for col in df.columns]
+    df['data'] = pd.to_datetime(df['data'], errors='coerce', dayfirst=True)
+    df = df[(df['data'] >= pd.to_datetime(start_date)) & (df['data'] <= pd.to_datetime(end_date))].sort_values('data')
+    colunas_fluxo = [c for c in df.columns if any(x in c for x in ['estrangeiro', 'institucional', 'pessoafisica', 'instfinanceira', 'outros'])]
+    for col in colunas_fluxo:
+        df[col+'_bi'] = df[col].apply(parse_valor)
+        df[col+'_acum'] = df[col+'_bi'].cumsum()
+    df_final = pd.merge(df, ibov, how='left', on='data')
+    df_final['ibovespa'] = df_final['ibovespa'].fillna(method='ffill')
 
-def plot_chart(ibov, df):
-    fig, ax1 = plt.subplots(figsize=(12, 6))
-    categorias = ['estrangeiro', 'institucional', 'pessoa física', 'inst. financeira', 'outros']
-    cores = ['#4e79a7', '#f28e2c', '#59a14f', '#76b7b2', '#af7aa1']
-    for cat, cor in zip(categorias, cores):
-        if cat in df.columns:
-            ax1.plot(df['data'], df[cat], label=cat.title(), color=cor, linewidth=2)
+    labels_dict = {
+        'estrangeiro_acum': "Estrangeiro",
+        'institucional_acum': "Institucional",
+        'pessoafisica_acum': "Pessoa Física",
+        'instfinanceira_acum': "Inst. Financeira",
+        'outros_acum': "Outros"
+    }
+    cores = ['#3b82f6', '#f97316', '#22c55e', '#ec4899', '#a855f7']
+    ordem_legenda = list(labels_dict.keys())
 
-    ax1.set_ylabel('Acumulado (R$ bilhões)', color='white')
-    ax1.tick_params(axis='y', labelcolor='white')
-    ax1.set_facecolor('#1c1f2e')
-    ax1.grid(True, linestyle='--', alpha=0.3)
+    fig, ax1 = plt.subplots(figsize=(16, 9))
+    fig.patch.set_facecolor('#0f172a')
+    ax1.set_facecolor('#1e293b')
+    ax1.grid(True, linestyle=':', linewidth=0.5, alpha=0.4)
+
+    for i, col in enumerate(ordem_legenda):
+        if col in df_final.columns:
+            ax1.plot(df_final['data'], df_final[col], linewidth=2.5, label=labels_dict[col], color=cores[i])
+
+    ax1.set_ylabel('Acumulado (R$ bilhões)', fontsize=13, color='white')
+    ax1.tick_params(colors='white')
 
     ax2 = ax1.twinx()
-    ax2.plot(ibov['data'], ibov['ibovespa'], 'w--', linewidth=1.5, label='Ibovespa')
-    ax2.set_ylabel('Ibovespa (pts)', color='white')
-    ax2.tick_params(axis='y', labelcolor='white')
+    ax2.plot(df_final['data'], df_final['ibovespa'], color='white', linestyle='--', linewidth=2, label='Ibovespa')
+    ax2.set_ylabel('Ibovespa (pts)', fontsize=13, color='white')
+    ax2.tick_params(colors='white')
+    min_ibov = int(df_final['ibovespa'].min() // 2500 * 2500)
+    max_ibov = int(df_final['ibovespa'].max() // 2500 * 2500 + 2500)
+    ax2.set_ylim(min_ibov, max_ibov)
+    ax2.yaxis.set_major_locator(mticker.MultipleLocator(2500))
+    import matplotlib.ticker as ticker
+    ax2.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f'{int(x):,}'.replace(',', '.')))
 
-    fig.patch.set_facecolor('#1c1f2e')
-    ax1.xaxis.set_major_locator(mdates.WeekdayLocator(interval=1))
-    ax1.xaxis.set_major_formatter(mdates.DateFormatter('%d/%m'))
+    datas = df_final['data'].tolist()
+    xticks = [datas[i] for i in range(0, len(datas), 7) if i < len(datas)]
+    ax1.set_xticks(xticks)
+    ax1.set_xticklabels([d.strftime('%d/%m') for d in xticks], color='white', rotation=0)
 
-    plt.title('')
-    fig.text(0.5, 0.5, '@alan_richard', fontsize=40, color='gray', ha='center', va='center', alpha=0.1)
-    ax1.legend(loc='upper left')
-    fig.tight_layout()
+    linhas = ax1.get_lines() + ax2.get_lines()
+    labels = [l.get_label() for l in linhas]
+    ax1.legend(linhas, labels, loc='upper left', fontsize=12, facecolor='#1e293b', edgecolor='white', labelcolor='white')
 
-    img = io.BytesIO()
-    plt.savefig(img, format='png', dpi=300, bbox_inches='tight', facecolor=fig.get_facecolor())
-    plt.close()
-    img.seek(0)
-    return base64.b64encode(img.getvalue()).decode()
+    plt.text(0.5, 0.5, '@alan_richard', fontsize=60, color='gray', alpha=0.08,
+             ha='center', va='center', transform=plt.gcf().transFigure)
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    start_date = request.form.get("start") or "2025-01-01"
-    end_date = request.form.get("end") or datetime.today().strftime('%Y-%m-%d')
-    ibov, df = get_data(start_date, end_date)
+    plt.tight_layout()
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", facecolor=fig.get_facecolor())
+    buf.seek(0)
+    encoded = base64.b64encode(buf.read()).decode('utf-8')
 
-    categorias = {
-        'estrangeiro': 'fundos e investidores de fora do Brasil',
-        'institucional': 'fundos de pensão, seguradoras, etc',
-        'pessoa física': 'investidores individuais',
-        'inst. financeira': 'bancos e corretoras',
-        'outros': 'empresas, governo e não categorizados'
-    }
+    resumo = {}
+    for col in ordem_legenda:
+        resumo[col] = df_final[col].dropna().iloc[-1] if col in df_final.columns else 0
 
-    resumo = []
-    for cat in categorias:
-        if cat in df.columns:
-            saldo = df[cat].iloc[-1]
-            entrada = saldo >= 0
-            resumo.append({
-                'categoria': cat.title(),
-                'descricao': categorias[cat],
-                'valor': f"R$ {abs(saldo):,.2f}Bi".replace('.', 'v').replace(',', '.').replace('v', ','),
-                'tipo': 'Entrada líquida' if entrada else 'Saída líquida',
-                'cor': 'green' if entrada else 'red'
-            })
-
-    chart = plot_chart(ibov, df)
-    ultima_data = df['data'].max().strftime('%d/%m/%Y')
-    return render_template("index.html", chart=chart, resumo=resumo, ultima_data=ultima_data)
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    last_date = df_final['data'].dropna().iloc[-1].strftime('%d/%m/%Y')
+    return encoded, resumo, last_date
